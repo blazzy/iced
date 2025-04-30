@@ -133,6 +133,10 @@ impl text::Editor for () {
         (0, 0)
     }
 
+    fn point_position(&self, _point: Point) -> Option<(usize, usize)> {
+        None
+    }
+
     fn selection(&self) -> Option<String> {
         None
     }

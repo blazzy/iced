@@ -24,6 +24,11 @@ pub trait Editor: Sized + Default {
     /// Line and column, respectively.
     fn cursor_position(&self) -> (usize, usize);
 
+    /// Returns the position in the text with the given cursor positon
+    ///
+    /// Line and column, respectively.
+    fn point_position(&self, point: Point) -> Option<(usize, usize)>;
+
     /// Returns the current selected text of the [`Editor`].
     fn selection(&self) -> Option<String>;
 

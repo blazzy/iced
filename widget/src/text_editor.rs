@@ -115,6 +115,7 @@ pub struct TextEditor<
     class: Theme::Class<'a>,
     key_binding: Option<Box<dyn Fn(KeyPress) -> Option<Binding<Message>> + 'a>>,
     on_edit: Option<Box<dyn Fn(Action) -> Message + 'a>>,
+    on_hover: Option<Box<dyn Fn(Option<(usize, usize)>) -> Message + 'a>>,
     highlighter_settings: Highlighter::Settings,
     highlighter_format: fn(
         &Highlighter::Highlight,
@@ -143,6 +144,7 @@ where
             class: Theme::default(),
             key_binding: None,
             on_edit: None,
+            on_hover: None,
             highlighter_settings: (),
             highlighter_format: |_highlight, _theme| {
                 highlighter::Format::default()
@@ -188,6 +190,16 @@ where
         on_edit: impl Fn(Action) -> Message + 'a,
     ) -> Self {
         self.on_edit = Some(Box::new(on_edit));
+        self
+    }
+
+    /// Sets the message that should be produced when the mouse hovers over
+    /// the [`TextEditor`].
+    pub fn on_hover(
+        mut self,
+        on_hover: impl Fn(Option<(usize, usize)>) -> Message + 'a,
+    ) -> Self {
+        self.on_hover = Some(Box::new(on_hover));
         self
     }
 
@@ -268,6 +280,7 @@ where
             class: self.class,
             key_binding: self.key_binding,
             on_edit: self.on_edit,
+            on_hover: self.on_hover,
             highlighter_settings: settings,
             highlighter_format: to_format,
         }
@@ -607,6 +620,17 @@ where
         shell: &mut Shell<'_, Message>,
         _viewport: &Rectangle,
     ) -> event::Status {
+        if let Event::Mouse(mouse::Event::CursorMoved { .. }) = event {
+            if let Some(point) = cursor.position_in(layout.bounds()) {
+                if let Some(on_hover) = self.on_hover.as_ref() {
+                    let internal = self.content.0.borrow();
+                    let position = internal.editor.point_position(point);
+
+                    shell.publish(on_hover(position));
+                };
+            }
+        }
+
         let Some(on_edit) = self.on_edit.as_ref() else {
             return event::Status::Ignored;
         };

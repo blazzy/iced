@@ -239,6 +239,13 @@ impl editor::Editor for Editor {
         (cursor.line, cursor.index)
     }
 
+    fn point_position(&self, point: Point) -> Option<(usize, usize)> {
+        self.internal()
+            .editor
+            .with_buffer(|buffer| buffer.hit(point.x, point.y))
+            .map(|cursor| (cursor.line, cursor.index))
+    }
+
     fn perform(&mut self, action: Action) {
         let mut font_system =
             text::font_system().write().expect("Write font system");
